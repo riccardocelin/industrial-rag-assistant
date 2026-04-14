@@ -1,2 +1,1 @@
-# industrial-rag-assistant
-industrial-rag-assistant
+# Domain-aware RAG system for industrial maintenance and diagnostics
