@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+roadmaps
+data/raw
+data
+config.ingestion.yaml
+config.embeddings.yaml

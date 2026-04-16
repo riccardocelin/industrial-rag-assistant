@@ -1,0 +1,11 @@
+input:
+  input_dir: "data/processed"
+  chunks_file: "chunks.jsonl"
+
+output:
+  output_dir: "data/processed"
+  chunks_embeddings_file: "chunks_with_embeddings.jsonl"
+
+embeddings:
+    batch_size: 64
+    skip_existing: True

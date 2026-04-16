@@ -1,0 +1,18 @@
+input:
+  pdf_dir: "data/raw"
+  glob_pattern: "*.pdf"
+  recursive: true
+
+chunking:
+  chunk_size: 500
+  chunk_overlap: 100
+  separators:
+    - "\n\n"
+    - "\n"
+    - " "
+    - ""
+  keep_separator: true
+
+output:
+  output_dir: "data/processed"
+  chunks_file: "chunks.jsonl"
