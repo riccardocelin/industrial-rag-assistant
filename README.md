@@ -21,4 +21,17 @@ It provides:
 - context for troubleshooting and system understanding
 This makes it suitable for testing Retrieval-Augmented Generation (RAG) pipelines in a technical setting, even with a limited number of documents.
 
+### Qdrant Vector DB
 
+pull qdrant image and container run + mounting:
+```bash
+docker pull qdrant/qdrant
+
+docker run -p 6333:6333 -p 6334:6334 \
+  -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
+  qdrant/qdrant
+```
+
+if you restart the pc, you can just re run the container.
+
+Qdrant UI available at: http://localhost:6333/dashboard

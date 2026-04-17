@@ -210,3 +210,5 @@ data/raw
 data
 config.ingestion.yaml
 config.embeddings.yaml
+qdrant_storage
+config.vectordb.yaml

@@ -1,0 +1,2 @@
+collection_name: "technical_docs"
+chunks_file: "data/processed/chunks_with_embeddings.jsonl"
