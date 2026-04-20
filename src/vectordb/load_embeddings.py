@@ -3,6 +3,16 @@ from qdrant_client.models import PointStruct
 from pathlib import Path
 import json
 import yaml
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+qdrant = {
+    "host": os.getenv("QDRANT_HOST"),
+    "port": int(os.getenv("QDRANT_PORT")),
+    "collection_name": os.getenv("QDRANT_COLLECTION")
+}
 
 PRJ_ROOT = Path(__file__).parent.parent.parent
 file_dir = Path(__file__).parent
@@ -15,7 +25,7 @@ chunks_file = PRJ_ROOT / config.get("chunks_file", "data/processed/chunks_with_e
 collection_name = config.get("collection_name", "technical_docs")
 
 def main():
-    client = QdrantClient(host="localhost", port=6333)
+    client = QdrantClient(host=qdrant["host"], port=qdrant["port"])
 
     points = []
     with open(chunks_file, "r", encoding="utf-8") as f:

@@ -112,7 +112,7 @@ docker run -p 6333:6333 -p 6334:6334 \
 ```
 
 Qdrant dashboard: http://localhost:6333/dashboard
-
+Uvicorn server startup: uvicorn app.api:app --reload
 ---
 
 ## Project direction

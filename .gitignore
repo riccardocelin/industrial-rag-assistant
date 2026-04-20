@@ -212,3 +212,4 @@ config.ingestion.yaml
 config.embeddings.yaml
 qdrant_storage
 config.vectordb.yaml
+config.test.yaml
