@@ -15,4 +15,5 @@ chunking:
 
 output:
   output_dir: "data/processed"
+  version: "v1"
   chunks_file: "chunks.jsonl"
