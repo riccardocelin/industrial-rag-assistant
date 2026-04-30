@@ -60,14 +60,21 @@ def main():
     PRJ_ROOT = Path(__file__).parent.parent.parent
     file_dir = Path(__file__).parent
 
-    load_dotenv()
+    load_dotenv(PRJ_ROOT / ".env")
+
     api_key = os.getenv("OPENAI_API_KEY")
-    embedding_model = os.getenv("EMBEDDING_MODEL")
+    embedding_model = os.getenv("OPENAI_EMBEDDING_MODEL")
+
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY is not set properly")
+
+    if not embedding_model:
+        raise ValueError("OPENAI_EMBEDDING_MODEL is not set properly")
 
 
     config = load_config(Path(file_dir / "config.embeddings.yaml"))
 
-    input_path = Path(PRJ_ROOT / config["input"]["input_dir"] / config["input"]["chunks_file"])
+    input_path = Path(PRJ_ROOT / config["input"]["input_dir"] / config["input"]["version"] / config["input"]["chunks_file"])
     output_path = Path(PRJ_ROOT / config["output"]["output_dir"] / config["output"]["chunks_embeddings_file"])
     batch_size = config["embeddings"]["batch_size"]
     skip_existing = config["embeddings"]["skip_existing"]

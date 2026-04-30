@@ -1,2 +1,4 @@
-collection_name: "technical_docs"
+vector_db_host: "localhost"
+vector_db_port: 6333
+collection_name: "technical_docs_v1"
 chunks_file: "data/processed/chunks_with_embeddings.jsonl"

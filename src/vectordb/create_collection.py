@@ -46,16 +46,19 @@ def main():
     
     client = QdrantClient(host="localhost", port=6333)
 
-    if not check_collection_exists(client, collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=embedding_dim,
-                distance=Distance.COSINE
-            )
+    if check_collection_exists(client, collection_name):
+        print(f"Collection '{collection_name}' already exists. Deleting and recreating.")
+        # deleting existing collection and creating a new one
+        client.delete_collection(collection_name)
+    
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(
+            size=embedding_dim,
+            distance=Distance.COSINE
         )
-    else:
-        print(f"Collection '{collection_name}' already exists. Skipping creation.")
+    )
+
 
 if __name__ == "__main__":
     main()

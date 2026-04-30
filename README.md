@@ -131,6 +131,12 @@ https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.p
 
 ## API endpoints
 
+to Run API locally:
+
+```bash
+uvicorn app.api:app --host 0.0.0.0 --port 8000
+```
+
 The API is implemented in `app/api.py` and exposes two endpoints.
 
 ### `GET /health`

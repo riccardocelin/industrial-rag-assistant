@@ -78,12 +78,17 @@ class RAG:
                 response = self.openai_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant, expert in industrial field."},
+                        {"role": "system", "content": "You are a helpful assistant, expert in industrial field. Do not answer to questions not related to the industrial field."},
                         {
                             "role": "user",
                             "content": query
                         }
-                    ]
+                    ],
+                    temperature=0.0, # lower temperature for more deterministic responses
+                    max_tokens=500,
+                    max_completion_tokens=1000,
+                    verbosity="low",
+                    seed=42
                 )
                 
             else: # regular rag behaviour
@@ -94,9 +99,9 @@ class RAG:
                             "role": "system",
                             "content":
                             ""
-                                f"You are a helpful assistant, expert in industrial field."
-                                f"Answer the user <USER_QUERY> based on the provided <CONTEXT>, providing a summary. If the query is not covered by the context, say that you don't know.\n\n"
-                                f"If available from teh context, answer by structuring: possible troubleshootin, checks to be performed, actions or next steps.\n\n"
+                                f"You are a helpful assistant, expert in industrial field. Do not answer to questions not related to the industrial field."
+                                f"Answer the user <USER_QUERY> based only on the provided <CONTEXT>, providing a summary. If the query is not covered by the context, say that you don't know.\n\n"
+                                f"If available from the context, answer by structuring: possible troubleshooting, checks to be performed, actions or next steps.\n\n"
                                 f"<CONTEXT>\n{context_from_docs}\n</CONTEXT>\n\n"
                             ""
                         },
@@ -107,7 +112,14 @@ class RAG:
                                 f"<USER_QUERY>\n{query}\n</USER_QUERY>\n\n"
                             ""
                         }
-                    ]
+                    ],
+                    temperature=0.0, # lower temperature for more deterministic responses
+                    allow_no_context_answer=False,
+                    crite_source=True,
+                    max_tokens=500,
+                    max_completion_tokens=1000,
+                    verbosity="low",
+                    seed=42
                 )
             
             answer =response.choices[0].message.content.strip()
@@ -123,9 +135,10 @@ class RAG:
             
             doc_info = {
                 "chunk_id": point.id,
-                "source": point.payload.get("source"),
+                "score": point.score,
                 "text": point.payload.get("text"),
-                "score": point.score
+                "source": point.payload.get("source"),
+                "pages": point.payload.get("pages"),
                 }
             docs.append(doc_info)
 

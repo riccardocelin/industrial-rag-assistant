@@ -562,17 +562,23 @@ def chunk_merged_documents(
             start_page = find_page_for_offset(page_spans, start_offset)
             end_page = find_page_for_offset(page_spans, max(start_offset, end_offset - 1))
 
-            pages = []
             if start_page is not None and end_page is not None:
-                pages = list(range(start_page, end_page + 1))
+                pages = list(range(start_page + 1, end_page + 2))
+            else:
+                pages = []
 
-            chunk_metadata = deepcopy(source_metadata)
-            chunk_metadata["chunk_id"] = global_chunk_id
-            chunk_metadata["chunk_start_char"] = start_offset
-            chunk_metadata["chunk_end_char"] = end_offset
-            chunk_metadata["start_page"] = start_page
-            chunk_metadata["end_page"] = end_page
-            chunk_metadata["pages"] = pages
+            chunk_metadata = {
+                "chunk_id": global_chunk_id,
+                "source_file": source_metadata.get("source_file"),
+                "source_path": source_metadata.get("source_path"),
+                "chunk_start_char": start_offset,
+                "chunk_end_char": end_offset,
+                "start_page": start_page + 1 if start_page is not None else None,
+                "end_page": end_page + 1 if end_page is not None else None,
+                "pages": pages,
+                "original_total_pages": source_metadata.get("original_total_pages"),
+                "is_cleaned": True,
+            }
 
             all_chunks.append(
                 Document(
@@ -650,7 +656,7 @@ def merge_cleaned_pages_by_document(cleaned_pages: list[Document]) -> list[Docum
             "is_cleaned": True,
             "is_merged_document": True,
             "merged_page_count": len(page_spans),
-            "original_total_pages": max(
+            "total_pages_after_cleaning": max(
                 int(p.metadata.get("page", 0)) for p in pages
             ) + 1 if pages else 0,
             "page_spans": page_spans,
@@ -748,5 +754,6 @@ def run_ingestion(config_path: str | Path = "config.ingestion.yaml") -> list[Doc
 
 
 if __name__ == "__main__":
+    print("scritpstarted")
     actual_dir = Path(__file__).parent
     run_ingestion(actual_dir / "config.ingestion.yaml")

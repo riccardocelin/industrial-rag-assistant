@@ -3,16 +3,7 @@ from qdrant_client.models import PointStruct
 from pathlib import Path
 import json
 import yaml
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
-qdrant = {
-    "host": os.getenv("QDRANT_HOST"),
-    "port": int(os.getenv("QDRANT_PORT")),
-    "collection_name": os.getenv("QDRANT_COLLECTION")
-}
 
 PRJ_ROOT = Path(__file__).parent.parent.parent
 file_dir = Path(__file__).parent
@@ -23,9 +14,11 @@ with open(config_path, "r") as f:
 
 chunks_file = PRJ_ROOT / config.get("chunks_file", "data/processed/chunks_with_embeddings.jsonl")
 collection_name = config.get("collection_name", "technical_docs")
+vector_db_host = config.get("vector_db_host", "localhost")
+vector_db_port = config.get("vector_db_port", 6333)
 
 def main():
-    client = QdrantClient(host=qdrant["host"], port=qdrant["port"])
+    client = QdrantClient(host=vector_db_host, port=vector_db_port)
 
     points = []
     with open(chunks_file, "r", encoding="utf-8") as f:
@@ -38,7 +31,7 @@ def main():
                     payload={
                         "text": record["text"],
                         "source": record["metadata"]["source_file"],
-                        "page": record["metadata"]["page"],
+                        "pages": record["metadata"]["pages"],
                         "embedding_dim": record["embedding_metadata"]["embedding_dim"],
                         "embedding_hash": record["text_hash"]
                     }
