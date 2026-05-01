@@ -1,16 +1,16 @@
 # Industrial RAG Assistant
 
-Industrial RAG Assistant is a Python-based Retrieval-Augmented Generation (RAG) project designed for industrial maintenance, troubleshooting, and diagnostics workflows.
+Industrial RAG Assistant is a Python project for industrial-domain question answering using a Retrieval-Augmented Generation (RAG) architecture.
 
-The repository contains:
-- A **data pipeline** for PDF ingestion, chunking, and embedding generation.
-- A **vector database integration** with Qdrant.
-- A **runtime RAG service** and **FastAPI HTTP API** for question answering.
-- Simple **test scripts** for direct RAG calls and API calls.
+It includes:
+- A document ingestion and chunking pipeline for PDFs.
+- OpenAI embedding generation for chunks.
+- Qdrant as vector database for retrieval.
+- A FastAPI `/ask` endpoint for RAG answers.
+- A Streamlit GUI that communicates with the API endpoint.
 
 The current demonstration context references ABB technical documentation for variable speed drives (VSDs):
 https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.pdf
-
 ---
 
 ## Repository structure
@@ -21,6 +21,9 @@ https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.p
 │   ├── api.py
 │   ├── core/
 │   │   └── settings.py
+│   ├── ginterface/
+│   │   ├── gui.py
+│   │   └── README.md
 │   └── rag/
 │       └── rag_system.py
 ├── src/
@@ -35,127 +38,85 @@ https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.p
 │       ├── load_embeddings.py
 │       └── config.vectordb.example.yaml
 ├── test/
-│   ├── test_rag_simple.py
 │   ├── test_api.py
-│   └── config.test.example.yaml
+│   ├── config.test_api.yaml
+│   └── config.test_api.example.yaml
 ├── requirements.txt
+├── pyproject.toml
 └── README.md
 ```
 
 ---
 
-## File-by-file overview
+## How the RAG system works
 
-### Application layer (`app/`)
+1. **Ingestion** (`src/ingestion/ingestion.py`) reads PDFs and splits text into chunks with metadata.
+2. **Embeddings** (`src/embeddings/build_embeddings.py`) generates OpenAI embeddings for each chunk and saves enriched JSONL.
+3. **Vector DB setup** (`src/vectordb/create_collection.py`) creates a Qdrant collection with cosine distance.
+4. **Load vectors** (`src/vectordb/load_embeddings.py`) upserts chunk embeddings + payload into Qdrant.
+5. **Runtime API** (`app/api.py`) receives user questions, retrieves top-k chunks via `RAG.retrieve`, and generates an answer via `RAG.generate`.
 
-- `app/api.py`
-  - Defines the FastAPI app and public endpoints.
-  - Uses `AskRequest`, `SourceItem`, and `AskResponse` Pydantic models.
-  - Builds a single `RAG` instance and serves retrieval + generation through `/ask`.
+---
 
-- `app/rag/rag_system.py`
-  - Implements the `RAG` class.
-  - `retrieve(query)` embeds the query and searches Qdrant for top-k relevant chunks.
-  - `generate(query, retrieved_docs, force_no_context)` calls the LLM with or without retrieved context.
-  - Includes helper methods for embedding, context formatting, and internal state inspection.
+## Streamlit GUI ↔ endpoint communication
 
-- `app/core/settings.py`
-  - Centralized typed settings with `pydantic-settings`.
-  - Reads environment values such as OpenAI key, model names, vector DB host/port/collection, and retrieval configuration.
-  - Supports local `.env` loading and container/runtime environment injection.
+The Streamlit interface is implemented in `app/ginterface/gui.py` and is designed as a thin client for the FastAPI endpoint.
 
-- `app/__init__.py`, `app/rag/__init__.py`, `app/core/__init__.py`
-  - Package initializer files.
+### GUI behavior
 
-### Data pipeline (`src/`)
+- Renders a page title and caption using app settings.
+- Provides:
+  - A text area for the user question.
+  - A `Force no context` checkbox.
+  - An `Ask` button.
+- Validates that the question is not empty.
 
-- `src/ingestion/ingestion.py`
-  - End-to-end ingestion pipeline:
-    1. Load YAML config.
-    2. Discover PDFs.
-    3. Load pages via `PyPDFLoader`.
-    4. Split into chunks using `RecursiveCharacterTextSplitter`.
-    5. Save JSONL records as `{text, metadata}`.
-  - Adds stable `chunk_id` metadata for downstream mapping.
+### Endpoint integration
 
-- `src/ingestion/config.ingestion.example.yaml`
-  - Example ingestion config for PDF input paths, chunking behavior, and output chunk file location.
+When the user clicks **Ask**, the GUI sends an HTTP POST request to `API_URL`, which is loaded from settings (`api_ask_endpoint_url`, default `http://localhost:8000/ask`).
 
-- `src/embeddings/build_embeddings.py`
-  - Loads chunk JSONL.
-  - Calls OpenAI embeddings in configurable batches.
-  - Writes output JSONL enriched with:
-    - `embedding`
-    - `text_hash` (SHA256)
-    - `embedding_metadata` (model, dimension)
+Payload sent by Streamlit:
 
-- `src/embeddings/config.embeddings.example.yaml`
-  - Example embeddings config for input/output directories and embedding runtime options (`batch_size`, `skip_existing`).
+```json
+{
+  "question": "<user text>",
+  "force_no_context": false
+}
+```
 
-- `src/vectordb/create_collection.py`
-  - Creates a Qdrant collection if missing.
-  - Infers vector dimension from first embedding record.
-  - Uses cosine distance.
+The request is sent with `requests.post(..., timeout=120)`.
 
-- `src/vectordb/load_embeddings.py`
-  - Loads embeddings JSONL.
-  - Converts rows to Qdrant `PointStruct` objects.
-  - Upserts points with payload fields like source, page, text, and embedding metadata.
+### Response handling in GUI
 
-- `src/vectordb/config.vectordb.example.yaml`
-  - Example vector DB config (collection name and embeddings file path).
+- On success:
+  - Displays `answer` from the JSON response.
+  - Displays `sources` in expandable sections when context mode is enabled and sources are present.
+- On error:
+  - Catches request exceptions and shows a user-facing error message.
 
-### Testing layer (`test/`)
-
-- `test/test_rag_simple.py`
-  - Directly tests `RAG.retrieve()` and `RAG.generate()` using YAML-configured query options.
-
-- `test/test_api.py`
-  - Sends HTTP POST request to `/ask` and prints retrieved context plus final answer.
-
-- `test/config.test.example.yaml`
-  - Example values for test query, context toggle, and API URL.
-
-- `test/__init__.py`
-  - Package initializer.
-
-### Root files
-
-- `requirements.txt`
-  - Declares runtime dependencies including FastAPI, Uvicorn, OpenAI SDK, Qdrant client, and LangChain ecosystem packages.
-
-- `README.md`
-  - Project documentation (this file).
+This mirrors the same `/ask` contract used by `test/test_api.py`, so both automated API tests and the Streamlit GUI exercise the same endpoint shape.
 
 ---
 
 ## API endpoints
 
-to Run API locally:
+### Run API locally
 
 ```bash
 uvicorn app.api:app --host 0.0.0.0 --port 8000
 ```
 
-The API is implemented in `app/api.py` and exposes two endpoints.
-
 ### `GET /health`
 
-Health check endpoint.
-
-**Response (200)**
+Health check:
 
 ```json
-{
-  "status": "ok"
-}
+{"status": "ok"}
 ```
 
 ### `POST /ask`
 
-Main RAG question-answering endpoint.
-
-**Request body**
+Request body:
 
 ```json
 {
@@ -163,11 +124,10 @@ Main RAG question-answering endpoint.
   "force_no_context": false
 }
 ```
-
 - `question` (string, required): user question.
 - `force_no_context` (boolean, optional, default `false`): if `true`, bypasses retrieved context during generation (debug/behavior comparison mode).
 
-**Response body (200)**
+Response body:
 
 ```json
 {
@@ -183,30 +143,9 @@ Main RAG question-answering endpoint.
 }
 ```
 
-Error handling:
-- `400` for validation/domain errors.
-- `500` for unexpected internal errors.
-
 ---
 
-## End-to-end workflow
-
-A typical local workflow is:
-
-1. Copy and edit example configs:
-   - `src/ingestion/config.ingestion.example.yaml` → `src/ingestion/config.ingestion.yaml`
-   - `src/embeddings/config.embeddings.example.yaml` → `src/embeddings/config.embeddings.yaml`
-   - `src/vectordb/config.vectordb.example.yaml` → `src/vectordb/config.vectordb.yaml`
-2. Place PDFs in your configured raw data folder.
-3. Run ingestion to produce chunks JSONL.
-4. Run embedding generation to produce embeddings JSONL.
-5. Create the Qdrant collection.
-6. Load embeddings into Qdrant.
-7. Start API server and query `/ask`.
-
----
-
-## Runbook (quick start)
+## Quick start
 
 ### 1) Install dependencies
 
@@ -218,15 +157,19 @@ pip install -r requirements.txt
 
 ```bash
 docker pull qdrant/qdrant
-
 docker run -p 6333:6333 -p 6334:6334 \
   -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
   qdrant/qdrant
 ```
 
-Qdrant dashboard: http://localhost:6333/dashboard
+### 3) Prepare pipeline configs
 
-### 3) Run data pipeline
+Create local configs from examples:
+- `src/ingestion/config.ingestion.example.yaml` → `src/ingestion/config.ingestion.yaml`
+- `src/embeddings/config.embeddings.example.yaml` → `src/embeddings/config.embeddings.yaml`
+- `src/vectordb/config.vectordb.example.yaml` → `src/vectordb/config.vectordb.yaml`
+
+### 4) Run pipeline
 
 ```bash
 python src/ingestion/ingestion.py
@@ -235,35 +178,35 @@ python src/vectordb/create_collection.py
 python src/vectordb/load_embeddings.py
 ```
 
-### 4) Start API
+### 5) Start API
 
 ```bash
 uvicorn app.api:app --reload
 ```
 
-### 5) Call API
+### 6) Start Streamlit GUI
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"question":"Which preventive maintenance schedule is suggested?","force_no_context":false}'
+streamlit run app/ginterface/gui.py
 ```
+
+Then open the URL shown by Streamlit and ask questions through the UI.
 
 ---
 
-## Configuration and environment
+## Configuration
 
-The runtime relies on environment variables (directly or via `.env`) for at least:
+Settings are managed in `app/core/settings.py` (Pydantic `BaseSettings`), including:
 - `OPENAI_API_KEY`
-- `EMBEDDING_MODEL`
-- Qdrant connection values (`QDRANT_HOST`, `QDRANT_PORT`, and collection naming where applicable)
+- `OPENAI_EMBEDDING_MODEL`
+- `OPENAI_LLM_MODEL`
+- `VECTOR_DB_HOST`, `VECTOR_DB_PORT`, `VECTOR_DB_COLLECTION_NAME`
+- `RETRIEVAL_TOP_K`
+- `API_ASK_ENDPOINT_URL`
 
-Application defaults are centralized in `app/core/settings.py`:
-- `openai_embedding_model: text-embedding-3-small`
-- `openai_llm_model: gpt-5.4-mini`
-- `retrieval_top_k: 5`
-- `vector_db_host: localhost`
-- `vector_db_port: 6333`
+A local `.env` is supported for development.
+
+
 
 ---
 
