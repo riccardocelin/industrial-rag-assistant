@@ -3,7 +3,7 @@ from pathlib import Path
 import requests
 
 # load test query from config file
-config_path = Path(__file__).parent / "config.test.yaml"
+config_path = Path(__file__).parent / "config.test_api.yaml"
 with open(config_path, "r") as f:
     config = yaml.safe_load(f)
 

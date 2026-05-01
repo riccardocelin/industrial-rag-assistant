@@ -12,11 +12,11 @@ This folder contains a minimal Python GUI for querying the RAG API.
 
 1. Start the API server (example):
    ```bash
-   uvicorn app.api:app --reload
+   uvicorn app.api:app --host 0.0.0.0 --port 8000
    ```
 2. In another terminal, run the GUI:
    ```bash
-   python app/ginterface/gui.py
+   spython -m streamlit run app/ginterface/gui.py
    ```
 
 If your API URL is different, edit `API_URL` in `app/ginterface/gui.py`.

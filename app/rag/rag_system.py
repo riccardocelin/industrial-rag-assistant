@@ -85,12 +85,11 @@ class RAG:
                         }
                     ],
                     temperature=0.0, # lower temperature for more deterministic responses
-                    max_tokens=500,
                     max_completion_tokens=1000,
                     verbosity="low",
                     seed=42
                 )
-                
+
             else: # regular rag behaviour
                 response = self.openai_client.chat.completions.create(
                     model=self.llm_model,
@@ -114,9 +113,6 @@ class RAG:
                         }
                     ],
                     temperature=0.0, # lower temperature for more deterministic responses
-                    allow_no_context_answer=False,
-                    crite_source=True,
-                    max_tokens=500,
                     max_completion_tokens=1000,
                     verbosity="low",
                     seed=42

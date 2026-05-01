@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     vector_db_port: int = Field(default=6333, ge=1, le=65535)
     vector_db_collection_name: str = "my_collection"
 
+    api_ask_endpoint_url: str = "http://localhost:8000/ask"
+
     # NOTE:
     # In local development, settings can be loaded from .env.
     # In Docker/Compose, environment variables are expected
