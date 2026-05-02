@@ -231,3 +231,90 @@ This project is intentionally set up as a strong foundation that will evolve in 
    - Improve API robustness and documentation maturity.
 
 In summary, the repository already provides an end-to-end industrial RAG baseline and is expected to mature into a containerized, continuously integrated, and continuously delivered production workflow.
+
+## Docker setup (Compose + Dockerfiles)
+
+This repository includes containerized runtime services for Qdrant, the FastAPI backend, and the Streamlit UI.
+
+### Dockerfiles
+
+- `docker/api.Dockerfile`
+  - Uses `python:3.11-slim`.
+  - Installs `requirements-api.txt`.
+  - Copies `app/api`, `app/rag`, and `app/core`.
+  - Starts the API with `uvicorn app.api.api:app --host 0.0.0.0 --port 8000`.
+- `docker/ui.Dockerfile`
+  - Uses `python:3.11-slim`.
+  - Installs `requirements-ui.txt`.
+  - Copies `app/ginterface` and `app/core`.
+  - Starts UI with `streamlit run app/ginterface/gui.py --server.address=0.0.0.0 --server.port=8501`.
+
+### Docker Compose services
+
+`compose.yaml` defines three services:
+
+1. `qdrant`
+   - Image: `qdrant/qdrant:v1.13.4`
+   - Port mapping: `${VECTOR_DB_PORT:-6333}:6333`
+   - Persistent volume: `./qdrant_storage:/qdrant/storage`
+
+2. `api`
+   - Built from `docker/api.Dockerfile`
+   - Loads environment from `.env`
+   - Uses internal Docker network to reach Qdrant with:
+     - `VECTOR_DB_HOST=qdrant`
+     - `VECTOR_DB_PORT=6333`
+   - Port mapping: `${API_PORT:-8000}:8000`
+
+3. `ui`
+   - Built from `docker/ui.Dockerfile`
+   - Loads environment from `.env`
+   - Uses internal Docker network to reach API with:
+     - `API_HOST=api`
+     - `API_PORT=8000`
+   - Port mapping: `${UI_PORT:-8501}:8501`
+
+### Run the full stack with Docker Compose
+
+1. Create a `.env` file in the project root with at least:
+
+```env
+OPENAI_API_KEY=your_key_here
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_LLM_MODEL=gpt-5.4-mini
+VECTOR_DB_COLLECTION_NAME=my_collection
+API_PORT=8000
+UI_PORT=8501
+VECTOR_DB_PORT=6333
+```
+
+2. Build and start all services:
+
+```bash
+docker compose up --build -d
+```
+
+3. Check container status:
+
+```bash
+docker compose ps
+```
+
+4. Access services:
+
+- API health check: `http://localhost:8000/health`
+- API docs: `http://localhost:8000/docs`
+- Streamlit UI: `http://localhost:8501`
+
+5. Stop services:
+
+```bash
+docker compose down
+```
+
+To also remove named/anonymous volumes created by Compose, run:
+
+```bash
+docker compose down -v
+```
+
