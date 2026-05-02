@@ -12,7 +12,7 @@ import streamlit as st
 from app.core.settings import get_settings
 
 settings = get_settings()
-API_URL = settings.api_ask_endpoint_url
+API_URL = f"http://{settings.api_host}:{settings.api_port}{settings.api_ask_endpoint}"
 APP_NAME = settings.app_name
 
 st.set_page_config(page_title=APP_NAME, layout="wide")

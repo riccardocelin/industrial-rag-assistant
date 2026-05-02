@@ -16,7 +16,7 @@ This folder contains a minimal Python GUI for querying the RAG API.
    ```
 2. In another terminal, run the GUI:
    ```bash
-   spython -m streamlit run app/ginterface/gui.py
+   python -m streamlit run app/ginterface/gui.py
    ```
 
 If your API URL is different, edit `API_URL` in `app/ginterface/gui.py`.

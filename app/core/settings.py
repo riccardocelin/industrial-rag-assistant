@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     vector_db_port: int = Field(default=6333, ge=1, le=65535)
     vector_db_collection_name: str = "my_collection"
 
-    api_ask_endpoint_url: str = "http://localhost:8000/ask"
+    api_host: str = "localhost"
+    api_port: int = Field(default=8000, ge=1, le=65535)
+    api_ask_endpoint: str = "/ask"
+    ui_port: int = Field(default=8501, ge=1, le=65535)
 
     # NOTE:
     # In local development, settings can be loaded from .env.

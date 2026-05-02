@@ -1,0 +1,11 @@
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.git
+.env
+data
+data
+qdrant_storage
+*.pyc
+.DS_Store

@@ -1,0 +1,5 @@
+uvicorn
+streamlit
+pydantic
+pydantic_settings
+requests

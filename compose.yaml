@@ -1,0 +1,41 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    container_name: rag-qdrant
+    ports:
+      - "${VECTOR_DB_PORT:-6333}:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: rag-api
+    env_file:
+      - .env
+    environment:
+      VECTOR_DB_HOST: qdrant # name of the qdrant service defined in this docker-compose file (this is how the api container will reach the qdrant container in the docker network)
+      VECTOR_DB_PORT: 6333 # default port for qdrant defined in the qdrant service (this is how the api container will reach the qdrant container in the docker network)
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: docker/ui.Dockerfile
+    container_name: rag-ui
+    env_file:
+      - .env
+    environment:
+      API_HOST: api # name of the api service defined in this docker-compose file (this is how the ui container will reach the api container in the docker network)
+      API_PORT: 8000 # default port for the api defined in the api service (this is how the ui container will reach the api container in the docker network)
+    ports:
+      - "${UI_PORT:-8501}:8501"
+    depends_on:
+      - api
+    restart: unless-stopped

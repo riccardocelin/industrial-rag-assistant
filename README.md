@@ -103,7 +103,7 @@ This mirrors the same `/ask` contract used by `test/test_api.py`, so both automa
 ### Run API locally
 
 ```bash
-uvicorn app.api:app --host 0.0.0.0 --port 8000
+uvicorn app.api.api:app --host 0.0.0.0 --port 8000
 ```
 
 ### `GET /health`
