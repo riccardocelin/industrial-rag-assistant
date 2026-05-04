@@ -10,6 +10,6 @@ RUN pip install --no-cache-dir -r requirements-ui.txt
 COPY app/ginterface ./app/ginterface
 COPY app/core ./app/core
 
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 CMD ["streamlit", "run", "app/ginterface/gui.py", "--server.address=0.0.0.0", "--server.port=8501"]

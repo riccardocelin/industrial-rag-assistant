@@ -1,21 +1,22 @@
 from qdrant_client import QdrantClient
 from openai import OpenAI
-from app.core.settings import get_settings
-
-# RAG pipeline
-# the idea is to have a RAG class that takes in a query and returns and answer
-# the RAG class will have a retriever and a generator methods
 
 class RAG:
-    def __init__(self):
-        
-        settings = get_settings()
-        self.openai_client = OpenAI(api_key=settings.openai_api_key.get_secret_value())
-        self.vector_db_client = QdrantClient(host=settings.vector_db_host, port=settings.vector_db_port)
-        self.embedding_model = settings.openai_embedding_model
-        self.llm_model = settings.openai_llm_model
-        self.collection_name = settings.vector_db_collection_name
-        self.top_k = settings.retrieval_top_k
+    def __init__(
+        self,
+        openai_client: OpenAI,
+        vector_db_client: QdrantClient,
+        embedding_model: str,
+        llm_model: str,
+        collection_name: str,
+        top_k: int,
+    ):
+        self.openai_client = openai_client
+        self.vector_db_client = vector_db_client
+        self.embedding_model = embedding_model
+        self.llm_model = llm_model
+        self.collection_name = collection_name
+        self.top_k = top_k
 
         
     def retrieve(self, query: str) -> list[dict]:
@@ -43,14 +44,13 @@ class RAG:
     
     def get_internal_state(self):
         # for debugging purposes, to check the internal state of the RAG system
-        settings = get_settings()
         state = {
-            "embedding_model": self.embedding_model,
-            "llm_model": self.llm_model,
-            "vector_db_host": settings.vector_db_host,
-            "vector_db_port": settings.vector_db_port,
-            "collection_name": self.collection_name,
-            "top_k": self.top_k,
+            "openai_client":        self.openai_client,
+            "vector_db_client":     self.vector_db_client,
+            "embedding_model":      self.embedding_model,
+            "llm_model":            self.llm_model,
+            "collection_name":      self.collection_name,
+            "top_k":                self.top_k
         }
         return state
 

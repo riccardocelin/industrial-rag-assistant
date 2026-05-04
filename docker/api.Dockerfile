@@ -11,6 +11,6 @@ COPY app/api ./app/api
 COPY app/rag ./app/rag
 COPY app/core ./app/core
 
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 CMD ["uvicorn", "app.api.api:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import List
-from fastapi import FastAPI
+from functools import lru_cache
+from fastapi import FastAPI, Depends
 from fastapi import HTTPException
 
-from app.rag.rag_system import RAG
-from app.core.settings import get_settings
+from app.rag import RAG, build_rag
 
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, examples=["What type of maintenance is necessary for the DCS800 system?"])
@@ -20,16 +20,18 @@ class AskResponse(BaseModel):
     answer: str
     sources: List[SourceItem]
 
+app = FastAPI()
 
-rag = RAG()
-app = FastAPI(title=get_settings().app_name)
+@lru_cache
+def get_rag() -> RAG:
+    return build_rag()
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 @app.post("/ask", response_model=AskResponse)
-def ask(request: AskRequest):
+def ask(request: AskRequest, rag: RAG = Depends(get_rag)):
     try:
         retrieved_docs = rag.retrieve(request.question)
         answer = rag.generate(request.question, retrieved_docs, force_no_context=request.force_no_context)
