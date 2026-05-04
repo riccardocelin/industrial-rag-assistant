@@ -4,12 +4,13 @@ from openai import OpenAI
 class RAG:
     def __init__(
         self,
-        openai_client: OpenAI,
-        vector_db_client: QdrantClient,
-        embedding_model: str,
-        llm_model: str,
-        collection_name: str,
-        top_k: int,
+        openai_client: OpenAI = None,
+        vector_db_client: QdrantClient = None,
+        embedding_model: str = None,
+        llm_model: str = None,
+        collection_name: str = None,
+        top_k: int = 5,
+        score_threshold: float = 0.0
     ):
         self.openai_client = openai_client
         self.vector_db_client = vector_db_client
@@ -17,7 +18,7 @@ class RAG:
         self.llm_model = llm_model
         self.collection_name = collection_name
         self.top_k = top_k
-
+        self.score_threshold = score_threshold
         
     def retrieve(self, query: str) -> list[dict]:
         # retrieve relevant documents from vector db
@@ -27,14 +28,8 @@ class RAG:
             print("Failed to get query embedding. Cannot retrieve documents.")
             return []
 
-        results = self.vector_db_client.query_points(
-            collection_name=self.collection_name,
-            query=query_embedding,
-            limit=self.top_k,
-            with_payload=True
-            )
+        retrieved_docs = self._retrieve_docs_list_from_query_embedding(query_embedding)
 
-        retrieved_docs = self._retrieve_docs_list_from_results(results)
         return retrieved_docs
 
 
@@ -118,17 +113,26 @@ class RAG:
                     seed=42
                 )
             
-            answer =response.choices[0].message.content.strip()
+            answer = response.choices[0].message.content.strip()
             return answer
         
         except Exception as e:
             print(f"Error generating response: {e}")
             return "Sorry, I encountered an error while generating the response."
 
-    def _retrieve_docs_list_from_results(self, qdrant_results: tuple) -> list[dict]:
+    def _retrieve_docs_list_from_query_embedding(self, query_embedding: list[float]) -> list[dict]:
+
+        results = self.vector_db_client.query_points(
+            collection_name=self.collection_name,
+            query=query_embedding,
+            limit=self.top_k,
+            score_threshold=self.score_threshold,
+            with_payload=True
+            )
+        
         docs = []
-        for point in qdrant_results.points:
-            
+        for point in results.points:
+        
             doc_info = {
                 "chunk_id": point.id,
                 "score": point.score,

@@ -1,3 +1,0 @@
-test_query: "What is a DCS800, what is it used for and which is the suggested scheduled maintenance?"
-force_no_context: false
-api_url: http://127.0.0.1:8000/ask

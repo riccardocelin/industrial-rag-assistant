@@ -11,3 +11,4 @@ functools
 pypdf
 requests
 streamlit
+pytest

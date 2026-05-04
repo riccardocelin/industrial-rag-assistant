@@ -24,4 +24,5 @@ def build_rag() -> RAG:
         llm_model=settings.openai_llm_model,
         collection_name=settings.vector_db_collection_name,
         top_k=settings.retrieval_top_k,
+        score_threshold=settings.retrieval_score_threshold
     )
