@@ -6,6 +6,17 @@ on:
   push:
     branches: [main]
 
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Force build/push for all images"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
 permissions:
   contents: read
   packages: write
@@ -44,7 +55,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.api == 'true'
+    if: needs.changes.outputs.api == 'true'  || github.event.inputs.force_build == 'true'
 
     steps:
       - uses: actions/checkout@v6
@@ -65,7 +76,7 @@ jobs:
   build-api:
     runs-on: ubuntu-latest
     needs: [changes, unit-tests]
-    if: needs.changes.outputs.api == 'true'
+    if: needs.changes.outputs.api == 'true' || github.event.inputs.force_build == 'true'
 
     env:
       IMAGE_API: ghcr.io/${{ github.repository }}/rag-api
@@ -82,14 +93,14 @@ jobs:
             .
 
       - name: Login to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_build == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin
 
       - name: Push API image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_build == 'true'
         run: |
           docker push $IMAGE_API:${{ github.sha }}
           docker push $IMAGE_API:latest
@@ -97,7 +108,7 @@ jobs:
   build-ui:
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.ui == 'true'
+    if: needs.changes.outputs.ui == 'true' || github.event.inputs.force_build == 'true'
 
     env:
       IMAGE_UI: ghcr.io/${{ github.repository }}/rag-ui
@@ -114,14 +125,14 @@ jobs:
             .
 
       - name: Login to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_build == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin
 
       - name: Push UI image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_build == 'true'
         run: |
           docker push $IMAGE_UI:${{ github.sha }}
           docker push $IMAGE_UI:latest
