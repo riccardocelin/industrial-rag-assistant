@@ -5,9 +5,8 @@ qdrant-client
 langchain
 langchain_community
 langchain_text_splitters
-pyddantic
+pydantic
 pydantic_settings
-functools
 pypdf
 requests
 streamlit
