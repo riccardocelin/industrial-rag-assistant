@@ -2,6 +2,9 @@
 
 Industrial RAG Assistant is a Python project for industrial-domain question answering using a Retrieval-Augmented Generation (RAG) architecture.
 
+The current demonstration technical documentation is available here:
+https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.pdf
+
 It includes:
 - A document ingestion and chunking pipeline for PDFs.
 - OpenAI embedding generation for chunks.
@@ -9,8 +12,6 @@ It includes:
 - A FastAPI `/ask` endpoint for RAG answers.
 - A Streamlit GUI that communicates with the API endpoint.
 
-The current demonstration context references ABB technical documentation for variable speed drives (VSDs):
-https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.pdf
 ---
 
 ## Repository structure
@@ -42,6 +43,8 @@ https://library.e.abb.com/public/a44d07ce27e7665e85257ccb00539304/3ADW000195_F.p
 │   ├── config.test_api.yaml
 │   └── config.test_api.example.yaml
 ├── requirements.txt
+├── requirements-api.txt
+├── requirements-ui.txt
 ├── pyproject.toml
 └── README.md
 ```
@@ -220,10 +223,16 @@ This project is intentionally set up as a strong foundation that will evolve in 
    - Introduce Docker Compose profiles for local development and staging parity.
 
 2. **CI/CD workflows**
-   - Add automated lint/test/build pipelines on pull requests.
-   - Validate ingestion and API behavior in CI with controlled fixtures.
-   - Build and publish container images through CI.
-   - Add deployment gates and environment promotion checks for safer releases.
+   - The project includes a CI pipeline that runs tests, builds Docker images, and pushes versioned images to GitHub Container Registry (GHCR).
+   - Deployment is currently performed manually through Docker Compose using immutable image tags, which keeps deployments reproducible while avoiding unnecessary infrastructure complexity for a local demo.
+   - Pull images from registry:
+     ```bash
+     docker compose -f compose.prod.yaml pull
+     ```
+   - Start containers with production Compose:
+     ```bash
+     docker compose -f compose.prod.yaml up -d
+     ```
 
 3. **Operational hardening**
    - Extend observability (structured logging, metrics, tracing).
