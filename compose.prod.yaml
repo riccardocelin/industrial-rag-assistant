@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ghcr.io/riccardocelin/industrial-rag-assistant/rag-api:latest
+    image: ghcr.io/riccardocelin/industrial-rag-assistant/${API_IMAGE_NAME}:${API_IMAGE_TAG}
     container_name: rag-api
     env_file:
       - .env
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
 
   ui:
-    image: ghcr.io/riccardocelin/industrial-rag-assistant/rag-ui:latest
+    image: ghcr.io/riccardocelin/industrial-rag-assistant/${UI_IMAGE_NAME}:${UI_IMAGE_TAG}
     container_name: rag-ui
     env_file:
       - .env
