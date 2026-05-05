@@ -66,6 +66,10 @@ class RAG:
 
         response = None
         context_from_docs = self._get_text_from_retrieved_docs(retrieved_docs)
+        base_system_prompt = (
+            "You are a helpful assistant and an expert in industrial systems. "
+            "If a question is outside the industrial domain, state that you cannot answer it."
+        )
 
         try:
 
@@ -73,7 +77,7 @@ class RAG:
                 response = self.openai_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant, expert in industrial field. Do not answer to questions not related to the industrial field."},
+                        {"role": "system", "content": base_system_prompt},
                         {
                             "role": "user",
                             "content": query
@@ -91,20 +95,23 @@ class RAG:
                     messages=[
                         {   
                             "role": "system",
-                            "content":
-                            ""
-                                f"You are a helpful assistant, expert in industrial field. Do not answer to questions not related to the industrial field."
-                                f"Answer the user <USER_QUERY> based only on the provided <CONTEXT>, providing a summary. If the query is not covered by the context, say that you don't know.\n\n"
-                                f"If available from the context, answer by structuring: possible troubleshooting, checks to be performed, actions or next steps.\n\n"
-                                f"<CONTEXT>\n{context_from_docs}\n</CONTEXT>\n\n"
-                            ""
+                            "content": (
+                                f"{base_system_prompt}\n"
+                                "Answer the user's <USER_QUERY> using only <CONTEXT>. "
+                                "Do not add facts that are not present in the context. "
+                                "If the context is missing, insufficient, or does not cover the request, reply exactly: "
+                                "'I don't know based on the provided context.'\n\n"
+                                "When context is sufficient, provide:\n"
+                                "1) Short summary\n"
+                                "2) Possible troubleshooting\n"
+                                "3) Checks to perform\n"
+                                "4) Actions / next steps\n\n"
+                                f"<CONTEXT>\n{context_from_docs or 'No context provided.'}\n</CONTEXT>\n"
+                            )
                         },
                         {
                             "role": "user",
-                            "content":
-                            ""
-                                f"<USER_QUERY>\n{query}\n</USER_QUERY>\n\n"
-                            ""
+                            "content": f"<USER_QUERY>\n{query}\n</USER_QUERY>"
                         }
                     ],
                     temperature=0.0, # lower temperature for more deterministic responses
