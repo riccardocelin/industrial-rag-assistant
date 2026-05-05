@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Industrial RAG API"
 
-    openai_api_key: SecretStr
+    openai_api_key: SecretStr = SecretStr("your-openai-api-key")
     openai_embedding_model: str = "text-embedding-3-small"
     openai_llm_model: str = "gpt-5.4-mini"
 
